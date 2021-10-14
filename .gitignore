@@ -105,6 +105,8 @@ data/
 input/
 saved/
 
+wandb/
+
 # editor, os cache directory
 .vscode/
 .idea/

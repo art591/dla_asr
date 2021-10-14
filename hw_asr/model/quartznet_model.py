@@ -49,7 +49,6 @@ class ResidualTCSConvBlock(nn.Module):
 class Quartznet(BaseModel):
     def __init__(self, n_feats, n_class, *args, **kwargs):
         super().__init__(n_feats, n_class, *args, **kwargs)
-        super().__init__()
         self.model = nn.Sequential(*
                         [
                             nn.Conv1d(n_feats, out_channels=256, kernel_size=33, stride=2, padding=16),
@@ -65,7 +64,29 @@ class Quartznet(BaseModel):
                     )
 
     def forward(self, spectrogram, *args, **kwargs):
-        return self.model(spectrogram)
+        res = self.model(spectrogram.transpose(2, 1))
+        print(spectrogram.shape, res.shape)
+        return res
+
+    def transform_input_lengths(self, input_lengths):
+        return input_lengths // 2
+
+
+class QuartznetSmall(BaseModel):
+    def __init__(self, n_feats, n_class, *args, **kwargs):
+        super().__init__(n_feats, n_class, *args, **kwargs)
+        self.model = nn.Sequential(*
+                        [
+                            nn.Conv1d(n_feats, out_channels=256, kernel_size=33, stride=2, padding=16),
+                            ResidualTCSConvBlock(256, 256, 33, 5),
+                            TCSConv(256, 256, 1, separable=False),
+                            nn.Conv1d(256, n_class, kernel_size=1, padding='same')
+                        ]
+                    )
+
+    def forward(self, spectrogram, *args, **kwargs):
+        res = self.model(spectrogram.transpose(2, 1)).transpose(1, 2)
+        return res
 
     def transform_input_lengths(self, input_lengths):
         return input_lengths // 2
