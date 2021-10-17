@@ -12,11 +12,12 @@ from hw_asr.base.base_text_encoder import BaseTextEncoder
 class CharTextEncoder(BaseTextEncoder):
 
     def __init__(self, alphabet: List[str]):
+        self.alphabet = alphabet
         self.ind2char = {k: v for k, v in enumerate(sorted(alphabet))}
         self.char2ind = {v: k for k, v in self.ind2char.items()}
 
     def __len__(self):
-        return len(self.ind2char)
+        return len(self.alphabet)
 
     def __getitem__(self, item: int):
         assert type(item) is int
@@ -48,5 +49,5 @@ class CharTextEncoder(BaseTextEncoder):
         return a
 
     @classmethod
-    def get_simple_alphabet(cls):
+    def get_simple_alphabet(cls, args):
         return cls(alphabet=list(ascii_lowercase + ' '))

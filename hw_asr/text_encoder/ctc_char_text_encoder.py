@@ -19,16 +19,15 @@ class CTCCharTextEncoder(CharTextEncoder):
 
     def ctc_decode(self, inds: List[int]) -> str:
         res = ''
-        prev_token = '^'
+        prev_token = self.EMPTY_TOK
         for i in range(len(inds)):
             c = self.ind2char[inds[i]]
-            if c == '^' and prev_token == c:
+            if c == self.EMPTY_TOK and prev_token == c:
                 continue
-            if c != prev_token and c != '^':
+            if c != prev_token and c != self.EMPTY_TOK:
                 res += c
             prev_token = c
         return res
-
 
 
     def ctc_beam_search(self, probs: torch.tensor, beam_size: int = 100) -> List[Tuple[str, float]]:
