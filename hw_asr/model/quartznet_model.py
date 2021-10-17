@@ -64,7 +64,7 @@ class Quartznet(BaseModel):
                     )
 
     def forward(self, spectrogram, *args, **kwargs):
-        res = self.model(spectrogram.transpose(2, 1))
+        res = self.model(spectrogram.transpose(2, 1)).transpose(1, 2)
         return res
 
     def transform_input_lengths(self, input_lengths):
