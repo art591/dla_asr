@@ -43,7 +43,7 @@
   "data": {
     "train": {
       "batch_size": 32,
-      "num_workers": 5,
+      "num_workers": 0,
       "datasets": [
         {
           "type": "LibrispeechDataset",
@@ -57,7 +57,7 @@
     },
     "val": {
       "batch_size": 32,
-      "num_workers": 5,
+      "num_workers": 0,
       "datasets": [
         {
           "type": "LibrispeechDataset",
