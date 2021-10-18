@@ -51,6 +51,10 @@ class BaseDataset(Dataset):
         # It would be easier to write length-based batch samplers later
         index = self._sort_index(index)
         self._index = index
+        self.wave2spec = self.config_parser.init_obj(
+                self.config_parser["preprocessing"]["spectrogram"],
+                torchaudio.transforms,
+            )
 
     def __getitem__(self, ind):
         data_dict = self._index[ind]
@@ -87,11 +91,8 @@ class BaseDataset(Dataset):
         with torch.no_grad():
             if self.wave_augs is not None:
                 audio_tensor_wave = self.wave_augs(audio_tensor_wave)
-            wave2spec = self.config_parser.init_obj(
-                self.config_parser["preprocessing"]["spectrogram"],
-                torchaudio.transforms,
-            )
-            audio_tensor_spec = wave2spec(audio_tensor_wave)
+
+            audio_tensor_spec = self.wave2spec(audio_tensor_wave)
             if self.spec_augs is not None:
                 audio_tensor_spec = self.spec_augs(audio_tensor_spec)
             return audio_tensor_wave, audio_tensor_spec

@@ -3,6 +3,7 @@ from torch import Tensor
 
 
 from hw_asr.augmentations.base import AugmentationBase
+import random
 
 
 class TimeMasking(AugmentationBase):
@@ -10,5 +11,8 @@ class TimeMasking(AugmentationBase):
         self._aug = torchaudio.transforms.TimeMasking(*args, **kwargs)
 
     def __call__(self, data: Tensor):
-        x = data.unsqueeze(1)
-        return self._aug(x).squeeze(1)
+        if random.random() < 0.5:
+            x = data.unsqueeze(1)
+            return self._aug(x).squeeze(1)
+        else:
+            return data

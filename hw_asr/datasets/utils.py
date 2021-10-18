@@ -1,6 +1,6 @@
 from operator import xor
 
-from torch.utils.data import DataLoader, ChainDataset
+from torch.utils.data import DataLoader, ConcatDataset
 
 import hw_asr.augmentations
 import hw_asr.batch_sampler as batch_sampler_module
@@ -18,6 +18,7 @@ def get_dataloaders(configs: ConfigParser, text_encoder: BaseTextEncoder):
         # set train augmentations
         if split == 'train':
             wave_augs, spec_augs = hw_asr.augmentations.from_configs(configs)
+            drop_last = True
         else:
             wave_augs, spec_augs = None, None
 
@@ -29,7 +30,7 @@ def get_dataloaders(configs: ConfigParser, text_encoder: BaseTextEncoder):
                 wave_augs=wave_augs, spec_augs=spec_augs))
         assert len(datasets)
         if len(datasets) > 1:
-            dataset = ChainDataset(datasets)
+            dataset = ConcatDataset(datasets)
         else:
             dataset = datasets[0]
 
