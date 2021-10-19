@@ -37,6 +37,10 @@ class LibrispeechDataset(BaseDataset):
             index_dir = data_dir
         self.index_dir = index_dir
         self._data_dir = data_dir
+        if isinstance(self.index_dir, str):
+            self.index_dir = Path.home() / index_dir
+        if isinstance(self._data_dir, str):
+            self._data_dir = Path.home() / self._data_dir
         if part == 'train_all':
             index = sum([self._get_or_load_index(part)
                          for part in URL_LINKS if 'train' in part], [])
