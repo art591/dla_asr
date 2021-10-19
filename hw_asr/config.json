@@ -28,10 +28,15 @@
           "min_transpose_semitones" : -4,
           "max_transpose_semitones": 4
         }
+      },
+      {"type" : "Noise", "args" :
+        {
+          "min_amplitude" : 0.001,
+          "max_amplitude": 0.015
+        }
       }
     ],
-    "spectrogram": [{"type" : "TimeStretch", "args" : {}},
-                    {"type" : "FrequencyMasking", "args" : {"freq_mask_param" :  15}},
+    "spectrogram": [{"type" : "FrequencyMasking", "args" : {"freq_mask_param" :  15}},
                     {"type" : "TimeMasking", "args" : {"time_mask_param" :  50}}]
   },
   "arch": {
