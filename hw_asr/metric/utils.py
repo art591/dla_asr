@@ -8,4 +8,6 @@ def calc_cer(target_text, predicted_text) -> float:
 
 
 def calc_wer(target_text, predicted_text) -> float:
+    target_text = target_text.split('_')
+    predicted_text = predicted_text.split('_')
     return jiwer.wer(target_text, predicted_text)
