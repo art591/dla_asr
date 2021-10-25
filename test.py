@@ -1,6 +1,7 @@
 import argparse
 import json
 from pathlib import Path
+import numpy as np
 
 import torch
 from tqdm import tqdm
@@ -9,7 +10,9 @@ from hw_asr.datasets.utils import get_dataloaders
 from hw_asr.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
 import hw_asr.model as module_model
 import hw_asr.loss as module_loss
+import hw_asr.text_encoder as module_text_enc
 import hw_asr.metric as module_metric
+from hw_asr.metric.utils import calc_cer, calc_wer
 from hw_asr.trainer import Trainer
 from hw_asr.utils import ROOT_PATH
 from hw_asr.utils.parse_config import ConfigParser
@@ -22,7 +25,8 @@ def main(config, out_file):
     logger = config.get_logger("test")
 
     # text_encoder
-    text_encoder = CTCCharTextEncoder.get_simple_alphabet()
+    text_encoder_class = getattr(module_text_enc, config['text_encoder']['type'])
+    text_encoder = text_encoder_class.get_simple_alphabet(config['text_encoder']['args'])
 
     # setup data_loader instances
     dataloaders = get_dataloaders(config, text_encoder)
@@ -32,8 +36,9 @@ def main(config, out_file):
     logger.info(model)
 
     # get function handles of loss and metrics
-    loss_fn = getattr(module_loss, config["loss"])
-    metric_fns = [getattr(module_metric, met) for met in config["metrics"]]
+    print(config["loss"])
+    loss_fn = getattr(module_loss, config["loss"]['type'])
+    metric_fns = [getattr(module_metric, met['type']) for met in config["metrics"]]
 
     logger.info("Loading checkpoint: {} ...".format(config.resume))
     checkpoint = torch.load(config.resume)
@@ -48,25 +53,38 @@ def main(config, out_file):
     model.eval()
 
     results = []
-
+    cer = 0
+    wer = 0
     with torch.no_grad():
-        for i, batch in enumerate(tqdm(dataloaders["test"])):
+        for i, batch in enumerate(tqdm(dataloaders["val"])):
             batch = Trainer.move_batch_to_device(batch, device)
             batch["log_probs"] = model(**batch)
             batch["log_probs_length"] = model.transform_input_lengths(
                 batch["spectrogram_length"]
             )
-            batch["probs"] = batch["log_probs"].exp().cpu()
+            batch["log_probs"] = batch["log_probs"].detach().cpu().numpy()
+            batch["probs"] = np.exp(batch["log_probs"])
             batch["argmax"] = batch["probs"].argmax(-1)
             for i in range(len(batch["text"])):
+                gt = batch["text"][i]
+                pred = text_encoder.ctc_decode(batch["argmax"][i])
+                beam_search_pred = text_encoder.ctc_beam_search(batch["log_probs"][i], beam_width=300)
+                beam_search_pred = beam_search_pred.replace(' ', '▁')
+                cer_cur = calc_cer(gt, beam_search_pred)
+                wer_cur = calc_wer(gt, beam_search_pred)
                 results.append({
-                    "ground_trurh": batch["text"][i],
-                    "pred_text_argmax": text_encoder.ctc_decode(batch["argmax"][i]),
-                    "pred_text_beam_search": text_encoder.ctc_beam_search(
-                        batch["probs"], beam_size=100
-                    )[:10],
+                    "ground_trurh": gt,
+                    "pred_text_argmax": pred,
+                    "cer" : cer_cur,
+                    "wer" : wer_cur,
+                    "pred_text_beam_search": beam_search_pred
 
                 })
+                cer += cer_cur
+                wer += wer_cur
+    print("CER: ", cer / len(dataloaders["val"]))
+    print("WER: ", wer / len(dataloaders["val"]))
+    
     with Path(out_file).open('w') as f:
         json.dump(results, f, indent=2)
 
@@ -102,14 +120,6 @@ if __name__ == "__main__":
         help="File to write results (.json)",
     )
     args.add_argument(
-        "-t",
-        "--test-data-folder",
-        default=None,
-        required=True,
-        type=str,
-        help="Path to dataset",
-    )
-    args.add_argument(
         "-b",
         "--batch-size",
         default=20,
@@ -123,23 +133,6 @@ if __name__ == "__main__":
         type=int,
         help="Number of workers for test dataloader"
     )
-
-    test_data_folder = Path(args.test_data_folder)
-
-    config = ConfigParser.from_args(DEFAULT_TEST_CONFIG_PATH)
-    config.config["data"] = {
-        "test": {
-            "batch_size": args.batch_size,
-            "num_workers": args.jobs,
-            "datasets": [
-                {
-                    "type": "CustomDirAudioDataset",
-                    "args": {
-                        "audio_dir": test_data_folder / "audio",
-                        "transcription_dir": test_data_folder / "transcriptions",
-                    }
-                }
-            ]
-        }
-    }
+    config = ConfigParser.from_args(args)
+    args = args.parse_args()
     main(config, args.output)

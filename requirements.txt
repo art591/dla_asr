@@ -1,4 +1,4 @@
-torch
+torch==1.9
 torchvision
 numpy
 tqdm
@@ -6,7 +6,7 @@ tensorboard
 
 pandas
 speechbrain~=0.5.9
-torchaudio~=0.9.1
+torchaudio==0.9
 datasets
 torch_audiomentations
 pydub
@@ -16,3 +16,5 @@ youtokentome
 editdistance
 Levenshtein
 wandb
+pyctcdecode
+https://github.com/kpu/kenlm/archive/master.zip
