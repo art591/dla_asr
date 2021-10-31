@@ -17,4 +17,5 @@ editdistance
 Levenshtein
 wandb
 pyctcdecode
+gdown
 https://github.com/kpu/kenlm/archive/master.zip
