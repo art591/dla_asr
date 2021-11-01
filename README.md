@@ -9,7 +9,7 @@ pip install -r ./requirements.txt
 
 ## Best results
 
-| Model  | Librispeech test-clean-100 WER|
+| Model  | Librispeech test-clean WER|
 | ------------- | ------------- |
 | DeepSpeech with Layer Norm | 0.19  |
 
